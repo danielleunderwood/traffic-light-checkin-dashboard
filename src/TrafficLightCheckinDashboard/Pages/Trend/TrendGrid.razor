@@ -1,0 +1,61 @@
+﻿@inject ApiHelper Http
+
+@if (allForecasts is null)
+{
+	<p><em>Loading...</em></p>
+}
+else
+{
+	<div class="grid-container">
+		<div class="grid">
+			@foreach (var date in allForecasts.Keys)
+			{
+				<div class="grid-column">
+					<div class="label-container">
+						<div class="label">
+							@(@date == allForecasts.Keys.First() || @date.DayOfWeek == DayOfWeek.Sunday || @date.DayOfYear == 1 ? date.ToShortDateString() : date.DayOfWeek.ToString()[0])
+						</div>
+					</div>
+					@foreach (var user in allForecasts[date].OrderBy(kvp => kvp.Key))
+					{
+						<MinimalCheckin forecasts="user" />
+					}
+				</div>
+			}
+		</div>
+	</div>
+}
+
+@code {
+	[Parameter]
+	public int lookbackPeriod { get; set; }
+
+	public Dictionary<DateTime, Dictionary<string, List<Checkin>>>? allForecasts { get; set; }
+
+	protected override async Task OnParametersSetAsync()
+	{
+		allForecasts = null;
+		var mostRecent = await Http.GetFromJsonAsync<Dictionary<string, List<Checkin>>>("/checkin");
+		var mostRecentDate = mostRecent.First().Value.First().Timestamp.Date;
+		allForecasts = new();
+		allForecasts[mostRecentDate] = mostRecent;
+
+		for (var i = 1; i < lookbackPeriod; i++)
+		{
+			var date = mostRecentDate.AddDays(-i);
+			allForecasts[date] = await Http.GetFromJsonAsync<Dictionary<string, List<Checkin>>>($"/checkin?date={date.ToString("yyyy-MM-dd")}");
+		}
+
+		var users = await Http.GetFromJsonAsync<User[]>("/users");
+		foreach (var date in allForecasts.Keys)
+		{
+			foreach (var user in users)
+			{
+				if (!allForecasts[date].TryGetValue(user.Id, out var _))
+				{
+					allForecasts[date][user.Id] = new List<Checkin>();
+				}
+			}
+		}
+	}
+}

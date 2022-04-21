@@ -1,0 +1,9 @@
+﻿.card-body-container {
+    display: flex;
+    align-items: center;
+    padding: 1rem;
+}
+
+.user-icon {
+    flex: 0;
+}

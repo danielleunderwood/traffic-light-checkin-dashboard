@@ -1,0 +1,43 @@
+﻿@inject ApiHelper Http
+
+@if(user is not null) {
+	<div class="card">
+		<div class="card-body-container">
+			<div class="card-body user-icon">
+				<TrafficLightHeart checkin=@checkin />
+			</div>
+			<div class="card-body">
+				<h3>
+					@summary
+				</h3>
+				<blockquote class="blockquote">
+					@checkin.Elaboration
+				</blockquote>
+				<footer class="blockquote-footer">
+					@timestamp
+					<cite>@checkin.Reactions?.Count</cite>
+				</footer>
+			</div>
+		</div>
+	</div>
+}
+
+@code {
+	[Parameter]
+	public Checkin checkin { get; set; } = null!;
+
+	private string name => user.Name;
+
+	private string summary => $"{name} {(string.IsNullOrEmpty(checkin.Emotion) ? "" : $"is {checkin.Emotion}")}";
+
+	private string timestamp => $"{checkin.Timestamp.ToShortDateString()} at {checkin.Timestamp.ToShortTimeString()}";
+
+
+	private User user { get; set; } = null!;
+
+	protected override async Task OnParametersSetAsync()
+	{
+		user = await Http.GetFromJsonAsync<User>($"/user?id={checkin.SlackUserId}");
+	}
+
+}

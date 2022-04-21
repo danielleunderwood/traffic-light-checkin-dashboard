@@ -1,0 +1,42 @@
+﻿
+<select @onchange="SelectTeam" Value="">
+	<option value="">All teams</option>
+	@foreach (var team in Org.Keys.OrderBy(o => o))
+	{
+		<option value="@team">@Org[team].Name (Team @team)</option>
+	}
+</select>
+
+@code {
+	[Parameter]
+	public string Value { get; set; } = null!;
+
+	[Parameter]
+	public EventCallback<string> ValueChanged { get; set; }
+
+	[Parameter]
+	public Dictionary<string, User> Org { get; set; } = null!;
+
+	private async Task SelectTeam(ChangeEventArgs args)
+	{
+		await ValueChanged.InvokeAsync(GetNewValue(args));
+	}
+
+	private string GetNewValue(ChangeEventArgs args)
+	{
+		var error = new InvalidOperationException("Nullable object must have a value.");
+
+		if (args.Value is null)
+		{
+			throw error;
+		}
+
+		var value = args.Value.ToString();
+		if (value is null)
+		{
+			throw error;
+		}
+
+		return value;
+	}
+}

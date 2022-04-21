@@ -1,0 +1,38 @@
+﻿@inject HttpClient Http
+
+<div class="layer-container">
+	<div class="layer red" style="opacity: @RedOpacity" />
+	<div class="layer yellow" style="opacity: @YellowOpacity" />
+	<div class="layer green" style="opacity: @GreenOpacity" />
+	<div class="layer user-icon">
+		<UserIcon User="user" />
+	</div>
+</div>
+
+@code {
+	[Parameter]
+	public KeyValuePair<string, List<Checkin>> forecasts { get; set; }
+
+	const double OpacityScalar = 0.5;
+
+	private double RedOpacity => CalculateOpacity(Selection.Red);
+
+	private double YellowOpacity => CalculateOpacity(Selection.Yellow);
+
+	private double GreenOpacity => CalculateOpacity(Selection.Green);
+
+	private User? user;
+
+	protected override async Task OnParametersSetAsync()
+	{
+		var result = await Http.GetAsync($"/user?id={forecasts.Key}");
+		user = result.StatusCode == System.Net.HttpStatusCode.NoContent
+			? null
+			: user = await result.Content.ReadFromJsonAsync<Core.User>();
+	}
+
+	private double CalculateOpacity(Selection color)
+	{
+		return forecasts.Value.Any() ? (OpacityScalar * forecasts.Value.Count(forecast => forecast.Selection == color) / forecasts.Value.Count) : 0;
+	}
+}

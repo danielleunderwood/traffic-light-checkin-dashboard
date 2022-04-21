@@ -1,0 +1,107 @@
+﻿@inject ApiHelper Http
+@page "/"
+
+<PageTitle>@shownDate</PageTitle>
+
+<h1>@shownDate</h1>
+
+@if (dailyCheckinsByUserIdWithSelectedTeamId is null || org is null)
+{
+	<p><em>Loading...</em></p>
+}
+else
+{
+	<div class="filters">
+		<TeamSelection @bind-Value="teamId" Org="@org" />
+		<label>
+			<input class="form-check-input" type="checkbox" checked="@showAll" @onclick="ToggleShowAll">
+			Show all details
+		</label>
+	</div>
+
+
+	<div>
+		@foreach (var forecast in dailyCheckinsByUserIdWithSelectedTeamId.Where(f => f.Value.Any()))
+		{
+			<span @onclick="(() => SetSelectedCheckin(forecast.Value.First().SlackUserId))" class="clickable">
+				<MinimalCheckin forecasts="forecast" />
+			</span>
+		}
+	</div>
+	<div>
+		@foreach (var checkin in dailyCheckinsByUserIdWithSelectedTeamId.Where(checkin => showAll || checkin.Key == selectedCheckin).SelectMany(checkin => checkin.Value))
+		{
+			<div class="card-container">
+				<CheckinCard checkin="@checkin" />
+			</div>
+		}
+	</div>
+}
+
+@code {
+	private string? selectedCheckin { get; set; }
+
+	private Dictionary<string, User> org { get; set; } = null!;
+
+	private string teamId { get; set; } = string.Empty;
+
+	private Dictionary<string, List<Checkin>>? dailyCheckinsByUserId { get; set; }
+
+	private Dictionary<string, List<Checkin>>? dailyCheckinsByUserIdWithSelectedTeamId
+	{
+		get
+		{
+			var result = new Dictionary<string, List<Checkin>>();
+			if (dailyCheckinsByUserId != null)
+			{
+				foreach (var userId in dailyCheckinsByUserId.Keys)
+				{
+					var shown = dailyCheckinsByUserId[userId].Where(checkin => ShowCheckin(checkin)).DistinctBy(checkin => checkin.Timestamp).ToList();
+					if (shown.Any())
+					{
+						result[userId] = shown;
+					}
+				}
+			}
+
+			return result;
+		}
+	}
+
+	private string? shownDate => dailyCheckinsByUserId?.First().Value.First().Timestamp.ToLongDateString();
+
+	private bool showAll => selectedCheckin is null;
+
+	protected override async Task OnInitializedAsync()
+	{
+		dailyCheckinsByUserId = await Http.GetFromJsonAsync<Dictionary<string, List<Checkin>>>($"/checkin");
+
+		var dict = new Dictionary<string, User>();
+		foreach (var teamId in dailyCheckinsByUserId.SelectMany(forecast => forecast.Value).Select(forecast => forecast.SlackTeamId).Distinct())
+		{
+			Console.WriteLine(teamId);
+			var userId = teamId.Split('&').First();
+			if (!dict.TryGetValue(teamId, out var _))
+			{
+				dict[teamId] = await Http.GetFromJsonAsync<User>($"/user?id={userId}");
+			}
+		}
+		org = dict;
+	}
+
+	private void SetSelectedCheckin(string? userId)
+	{
+		selectedCheckin = userId;
+	}
+
+	private void ToggleShowAll()
+	{
+		selectedCheckin = selectedCheckin == null ? dailyCheckinsByUserIdWithSelectedTeamId?.Keys.First() : null;
+	}
+
+	private bool ShowCheckin(Checkin checkin)
+	{
+		return string.IsNullOrEmpty(teamId)
+			|| checkin.SlackTeamId == teamId;
+	}
+}

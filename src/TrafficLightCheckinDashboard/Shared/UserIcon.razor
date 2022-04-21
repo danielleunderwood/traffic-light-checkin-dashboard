@@ -1,0 +1,15 @@
+﻿@if (User?.ImageUrl is null)
+{
+	<div style="display: flex; align-items: center; justify-content: center; background-color: rgba(0.5, 0.5, 0.5, 0.5); height: 50px">
+	<span class="fa-solid fa-person" />
+	</div>
+} 
+else
+{
+	<img class="layer user-icon" src="@(User?.ImageUrl)" alt="@User.Id" />
+}
+
+@code {
+	[Parameter]
+	public User? User { get; set; }
+}
