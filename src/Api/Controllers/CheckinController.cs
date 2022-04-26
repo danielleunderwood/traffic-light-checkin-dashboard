@@ -16,7 +16,7 @@ public class CheckinController : ControllerBase
         _checkinHelper = checkinRepository;
     }
 
-    [HttpGet(Name = "GetCheckins")]
+    [HttpGet("")]
     public async Task<Dictionary<string, List<Checkin>>> Get([FromQuery] string? date = null)
     {
         return DateTime.TryParse(date, out var parsedDate)

@@ -24,18 +24,9 @@
 
 	private string GetNewValue(ChangeEventArgs args)
 	{
-		var error = new InvalidOperationException("Nullable object must have a value.");
-
-		if (args.Value is null)
-		{
-			throw error;
-		}
-
-		var value = args.Value.ToString();
-		if (value is null)
-		{
-			throw error;
-		}
+		var value = args.Value?.ToString();
+		
+        ArgumentNullException.ThrowIfNull(value, nameof(value));
 
 		return value;
 	}

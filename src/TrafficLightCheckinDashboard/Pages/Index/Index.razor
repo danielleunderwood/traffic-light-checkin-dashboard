@@ -79,7 +79,6 @@ else
 		var dict = new Dictionary<string, User>();
 		foreach (var teamId in dailyCheckinsByUserId.SelectMany(forecast => forecast.Value).Select(forecast => forecast.SlackTeamId).Distinct())
 		{
-			Console.WriteLine(teamId);
 			var userId = teamId.Split('&').First();
 			if (!dict.TryGetValue(teamId, out var _))
 			{

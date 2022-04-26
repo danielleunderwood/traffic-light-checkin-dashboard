@@ -14,6 +14,9 @@ public class ApiHelper
     public async Task<T> GetFromJsonAsync<T>(string requestUri)
     {
         var result = await _client.GetFromJsonAsync<T>(requestUri);
-        return result == null ? throw new InvalidOperationException("Nullable object must have a value.") : result;
+
+        ArgumentNullException.ThrowIfNull(result, nameof(result));
+
+        return result;
     }
 }

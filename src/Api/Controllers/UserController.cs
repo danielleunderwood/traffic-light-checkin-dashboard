@@ -16,15 +16,13 @@ public class UserController : ControllerBase
         _userRepository = checkinRepository;
     }
 
-    [HttpGet(Name = "GetUsers")]
-    [Route("/user")]
+    [HttpGet("/user")]
     public async Task<User?> GetUser([FromQuery] string id)
     {
         return await _userRepository.GetUser(id);
     }
 
-    [HttpGet(Name = "GetUsers")]
-    [Route("/users")]
+    [HttpGet("/users")]
     public IEnumerable<User> GetAll()
     {
         return _userRepository.GetUsers();

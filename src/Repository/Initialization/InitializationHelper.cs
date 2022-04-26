@@ -14,6 +14,8 @@ internal class InitializationHelper
             }
         });
 
-        return result == null ? throw new InvalidOperationException("Nullable object must have a value.") : result;
+        ArgumentNullException.ThrowIfNull(result, nameof(result));
+        
+        return result;
     }
 }
